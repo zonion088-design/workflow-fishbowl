@@ -23,7 +23,7 @@ jobs:
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
 
-      - name: Smoke: --dump on synthetic data
+      - name: "Smoke: --dump on synthetic data"
         shell: bash
         run: |
           python - <<'EOF'
@@ -37,5 +37,5 @@ jobs:
           print("fixtures generated:", sorted(p.name for p in root.iterdir()))
           EOF
 
-      - name: Smoke: CLI help
+      - name: "Smoke: CLI help"
         run: python -m fishbowl --help
