@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.fishbowl-state.json
+fishbowl/_state.json
+.claude/
+.DS_Store

@@ -1,0 +1,12 @@
+{
+  "_comment": "Prices are USD per million tokens. 'match' is a lowercase substring matched against the model name found in transcripts. Unknown models report no cost estimate. Update freely - the shipped values are approximate and may drift from vendor pricing.",
+  "models": [
+    { "match": "claude-opus",           "in": 15.0, "out": 75.0,  "cache_read": 1.5,  "cache_write": 18.75 },
+    { "match": "claude-sonnet",         "in": 3.0,  "out": 15.0,  "cache_read": 0.3,  "cache_write": 3.75 },
+    { "match": "claude-haiku",          "in": 1.0,  "out": 5.0,   "cache_read": 0.1,  "cache_write": 1.25 },
+    { "match": "glm",                   "in": 0.5,  "out": 2.0,   "cache_read": 0.1,  "cache_write": 0.6 },
+    { "match": "deepseek",             "in": 0.3,  "out": 1.2,   "cache_read": 0.06, "cache_write": 0.4 },
+    { "match": "gpt-5",                 "in": 1.25, "out": 10.0,  "cache_read": 0.125,"cache_write": 1.5 },
+    { "match": "o3",                    "in": 2.0,  "out": 8.0,   "cache_read": 0.5,  "cache_write": 2.5 }
+  ]
+}
