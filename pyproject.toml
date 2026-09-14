@@ -3,14 +3,14 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fishbowl"
+name = "workflow-fishbowl"
 version = "0.1.0"
-description = "Watch your Claude Code agents through the glass - a read-only local observability dashboard for long-running AI sessions."
+description = "A read-only local observability dashboard for long-running Codex and Claude Code workflows."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "fishbowl contributors" }]
-keywords = ["claude-code", "observability", "monitoring", "dashboard", "agent"]
+keywords = ["codex", "claude-code", "observability", "monitoring", "dashboard", "agent"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Web Environment",
@@ -27,10 +27,11 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/zonion088-design/fishbowl"
+Homepage = "https://github.com/zonion088-design/workflow-fishbowl"
 
 [project.scripts]
 fishbowl = "fishbowl.__main__:main"
+workflow-fishbowl = "fishbowl.__main__:main"
 
 [tool.setuptools.packages.find]
 include = ["fishbowl*"]

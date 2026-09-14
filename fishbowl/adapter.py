@@ -1,8 +1,8 @@
 """Source adapters.
 
 A source adapter turns a directory tree of agent transcripts into
-FileEntries the scanner understands.  v0.1 ships ClaudeCodeAdapter;
-the Protocol is the extension point for other agents (Codex, ...)
+FileEntries the scanner understands. Built-in adapters support Claude Code
+and Codex; the Protocol is the extension point for other agents
 and for the demo fixtures (which reuse the same adapter pointed at
 a different root).
 """

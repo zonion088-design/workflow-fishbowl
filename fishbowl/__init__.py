@@ -1,4 +1,4 @@
-"""fishbowl - watch your Claude Code agents through the glass.
+"""workflow-fishbowl - watch Codex and Claude Code through the glass.
 
 A read-only, localhost-only observability dashboard for long-running
 AI coding sessions. Parses local session transcripts and shows what

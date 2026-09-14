@@ -39,6 +39,7 @@ class FileEntry:
     project_dir: str = ""      # encoded project directory name
     role: str = "main"         # main | subagent | workflow
     agent: str | None = None   # subagent stem, e.g. "agent-a33..."
+    format: str = "claude"     # claude | codex
 
 
 @dataclass
@@ -157,7 +158,11 @@ class Scanner:
             ctx.line_no = cur.line_no
             try:
                 obj = json.loads(raw.decode("utf-8", errors="replace"))
-                res = parse_line(obj, ctx)
+                if e.format == "codex":
+                    from .codex import parse_codex_line
+                    res = parse_codex_line(obj, ctx)
+                else:
+                    res = parse_line(obj, ctx)
             except Exception:
                 stats.parse_errors += 1
                 res = LineResult()

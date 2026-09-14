@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import threading
 import time
+from pathlib import Path
 
 from .claude_code import ClaudeCodeAdapter
+from .codex import CodexAdapter, MultiAdapter
 from .config import Config
 from .scanner import Scanner
 from .server import make_server
@@ -23,7 +25,14 @@ class App:
             self._replay = None
         self.cfg = cfg
         self.store = Store(cfg)
-        self.adapter = ClaudeCodeAdapter(cfg.source_root)
+        if demo or not cfg.include_codex:
+            self.adapter = ClaudeCodeAdapter(cfg.source_root)
+        else:
+            self.adapter = MultiAdapter([
+                ClaudeCodeAdapter(cfg.source_root),
+                CodexAdapter(Path.home() / ".codex" / "sessions"),
+                CodexAdapter(Path.home() / ".codex" / "archived_sessions"),
+            ])
         self.scanner = Scanner(self.adapter, self.store, cfg)
         self._scan_thread: threading.Thread | None = None
         self._stop = threading.Event()

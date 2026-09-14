@@ -1,11 +1,12 @@
-# fishbowl 🐠
+# workflow-fishbowl 🐠
 
-**Watch your Claude Code agents through the glass.**
+**Watch your Codex and Claude Code workflows through the glass.**
 
-fishbowl is a tiny, read-only local dashboard that shows what your Claude Code
-sessions are doing *right now* — and what they did while you were looking
+workflow-fishbowl is a tiny, read-only local dashboard that shows what your
+Codex and Claude Code sessions are doing *right now* — and what they did while you were looking
 away. If you have ever left a long agent task running in a terminal, come
-back 20 minutes later and wondered *"what is it actually doing?"*, fishbowl
+back 20 minutes later and wondered *"what is it actually doing?"*,
+workflow-fishbowl
 is for you.
 
 - **Live session list** — every project you work on, grouped, with status
@@ -20,33 +21,41 @@ is for you.
   an editable price table.
 - **Zero dependencies. No install. Read-only.**
 
-fishbowl works by tailing the JSONL transcripts that Claude Code already
-writes under `~/.claude/projects/`. It never talks to the network, never
-sends telemetry, and never writes a single byte into your `~/.claude`
-directory.
+workflow-fishbowl reads the local JSONL transcripts already written by Claude
+Code under `~/.claude/projects/` and by Codex under `~/.codex/sessions/`.
+It never sends telemetry and never modifies either tool's transcript files.
 
 ## Quick start
 
-Requires Python 3.10+. No pip packages — fishbowl is pure standard library.
+Requires Python 3.10+. No pip packages — workflow-fishbowl is pure standard
+library.
 
 ```bash
-git clone https://github.com/zonion088-design/fishbowl.git
-cd fishbowl
+git clone https://github.com/zonion088-design/workflow-fishbowl.git
+cd workflow-fishbowl
 python -m fishbowl
 ```
 
-Then open <http://127.0.0.1:8765>. That's it.
+The command prints the exact local URL. By default it is
+<http://127.0.0.1:8765>. If that port is already in use, choose another one:
+
+```bash
+python -m fishbowl --port 8877
+```
+
+Then open the URL printed in the terminal. `127.0.0.1` always means the
+current computer; the dashboard is not exposed to the local network.
 
 Prefer a real install?
 
 ```bash
 pipx install .
-fishbowl            # same thing, on your PATH
+workflow-fishbowl   # same thing, on your PATH
 ```
 
 ## Demo mode
 
-No Claude Code on this machine? Try the demo — it generates synthetic
+No Codex or Claude Code on this machine? Try the demo — it generates synthetic
 sessions (including a deliberately stalled one) and replays a scripted
 agent in real time:
 
@@ -57,20 +66,16 @@ python -m fishbowl --demo
 ## How it works
 
 ```
-~/.claude/projects/          fishbowl                          you
-┌─────────────────┐    ┌──────────────────────────────┐    ┌─────────┐
-│ <project>/      │    │ scanner (incremental,        │    │ browser │
-│   <session>.jsonl├───►│   byte-offset cursors)      │    │         │
-│   <session>/    │    │   → parser → in-memory store │───►│ 127.0.0.│
-│     subagents/… │    │   → read-only GET API        │    │  :8765   │
-└─────────────────┘    └──────────────────────────────┘    └─────────┘
-        read-only                  localhost only
+~/.claude/projects/ ─┐
+                     ├─► adapters → incremental scanner → local dashboard
+~/.codex/sessions/  ─┘                         127.0.0.1:<port>
 ```
 
 - **Incremental scanning** — files are `stat()`ed every 2 seconds; only new
   bytes are read and parsed. A multi-hundred-MB transcript history is fine;
   restarts resume from persisted cursors (`~/.fishbowl/state.json`).
-- **Half-line safe** — a line that Claude Code is still writing is left for
+- **Half-line safe** — a line that Codex or Claude Code is still writing is
+  left for
   the next cycle. Truncated/replaced files are detected and rebuilt.
 - **Hostile-input safe** — corrupted JSON, 6 MB attachment lines and empty
   files are skipped or flagged, never crash the scanner.
@@ -88,7 +93,7 @@ usage: fishbowl [-h] [--demo] [--port PORT] [--root PATH] [--no-cache]
 |---|---|---|
 | `--demo` | off | run on bundled synthetic data |
 | `--port` | 8765 | dashboard port (localhost only) |
-| `--root` | `~/.claude/projects` | transcript root to watch |
+| `--root` | `~/.claude/projects` | custom Claude Code transcript root |
 | `--no-cache` | off | don't persist scan cursors between runs |
 | `--poll` | 2.0 | scan interval in seconds |
 | `--open` | off | open the dashboard in a browser on start |
@@ -121,8 +126,8 @@ than 30 min without activity are archived. These are constants in
 
 ## FAQ
 
-**Does it modify Claude Code or my sessions?**
-No. fishbowl is a pure observer.
+**Does it modify Codex, Claude Code, or my sessions?**
+No. workflow-fishbowl is a pure observer.
 
 **Windows / macOS / Linux?**
 Yes — stdlib only, no OS-specific code. (Developed and tested on Windows.)
@@ -141,8 +146,7 @@ only new bytes are parsed.
 ## Roadmap
 
 - [ ] v0.2: supervision features — approvals, notifications
-- [ ] Codex adapter (same dashboard, `.codex` sessions) — the source layer
-      is already an adapter protocol
+- [x] Codex adapter (same dashboard, `.codex` sessions)
 - [ ] SSE push instead of polling
 - [ ] Docker image
 - [ ] Timeline filtering / search

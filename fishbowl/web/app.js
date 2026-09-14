@@ -145,8 +145,8 @@ async function renderSessions() {
 
   if (!sessions.length) {
     root.innerHTML = "<div class='card'>No sessions found yet. " +
-      "fishbowl watches <code>~/.claude/projects</code> by default — " +
-      "or start a Claude Code session and wait a couple of seconds.</div>";
+      "workflow-fishbowl watches local Codex and Claude Code sessions — " +
+      "or start a session and wait a couple of seconds.</div>";
     return;
   }
 

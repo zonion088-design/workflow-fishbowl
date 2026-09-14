@@ -111,7 +111,7 @@ class ToolCall:
 
 @dataclass
 class Session:
-    """Everything known about one Claude Code session."""
+    """Everything known about one Codex or Claude Code session."""
 
     session_id: str
     project_dir: str             # encoded directory name, e.g. "C--Users-demo-x"

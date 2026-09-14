@@ -17,6 +17,7 @@ class Config:
     preview_chars: int = 400                  # summaries are clipped to this
     max_line_bytes: int = 5_000_000          # giant attachment lines: skip
     cache_path: Path | None = None           # None -> no cursor persistence
+    include_codex: bool = False              # CLI enables Codex auto-discovery
     prices: list = field(default_factory=list)  # from prices.json
 
 

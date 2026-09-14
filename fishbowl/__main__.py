@@ -1,7 +1,7 @@
 """CLI entry point.
 
-    python -m fishbowl                 # watch ~/.claude/projects
-    python -m fishbowl --demo          # synthetic data, no Claude Code needed
+    python -m fishbowl                 # watch Codex + Claude Code
+    python -m fishbowl --demo          # synthetic data, no agent needed
     python -m fishbowl --port 8765
     python -m fishbowl --root PATH     # custom transcript root
     python -m fishbowl --dump          # one scan, JSON to stdout, exit
@@ -31,10 +31,10 @@ HOST = "127.0.0.1"          # non-negotiable: localhost only
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="fishbowl",
-        description="Watch your Claude Code agents through the glass "
+        description="Watch Codex and Claude Code workflows through the glass "
                     "- a read-only local observability dashboard.")
     p.add_argument("--demo", action="store_true",
-                   help="run on bundled synthetic data (no ~/.claude "
+                   help="run on bundled synthetic data (no Codex or Claude "
                         "needed; nothing in the repo is modified)")
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--root", type=Path, default=None,
@@ -68,7 +68,8 @@ def main(argv=None) -> int:
 
     cfg = Config(
         source_root=root, port=args.port, poll_interval=args.poll,
-        cache_path=cache, prices=load_prices(PKG_DIR / "prices.json"))
+        cache_path=cache, prices=load_prices(PKG_DIR / "prices.json"),
+        include_codex=not args.demo)
 
     app: App = build_app(cfg, demo=args.demo)
 
