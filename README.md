@@ -2,6 +2,12 @@
 
 **Watch your Codex and Claude Code workflows through the glass.**
 
+[![workflow-fishbowl dashboard](docs/workflow-fishbowl-dashboard.png)](demo/workbench-demo.html)
+
+See the [interactive static demo](demo/workbench-demo.html) for the full
+three-level task view, evidence-derived status, and supervision side panel.
+The demo uses synthetic data and does not connect to your local sessions.
+
 workflow-fishbowl is a tiny, read-only local dashboard that shows what your
 Codex and Claude Code sessions are doing *right now* — and what they did while you were looking
 away. If you have ever left a long agent task running in a terminal, come

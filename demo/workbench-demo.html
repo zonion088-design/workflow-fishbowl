@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>workflow-fishbowl workbench — supervision demo (v0.2 vision)</title>
+<meta name="description" content="Three-level supervision workbench demo: major tasks, steps with evidence checks, work items, approvals and system health. Static mock with synthetic data.">
+<style>
+/* ---------------------------------------------------------------------------
+   workflow-fishbowl workbench demo — v0.2 "supervision" vision, static mock.
+   Mirrors the three-level information architecture:
+     Level 1  Major task      (left rail)
+     Level 2  Step            (middle, numbered, expandable)
+     Level 3  Work item       (expanded in place, inside its step)
+   plus a right pane with task-level aggregation:
+     health / approvals / anomalies / timeline.
+   All data is synthetic. Zero external dependencies.
+--------------------------------------------------------------------------- */
+:root {
+  --bg: #f4f7fb; --panel: #fff; --line: #dde5ee;
+  --text: #17222e; --muted: #64768a;
+  --accent: #2f7fd1; --accent-soft: #e3eefb;
+  --ok: #239455; --ok-soft: #e0f4e8;
+  --warn: #b8871a; --warn-soft: #fbf0d8;
+  --bad: #cf4b4b; --bad-soft: #fbe5e5;
+  --idle: #8a94a6; --idle-soft: #edf1f6;
+  --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161d; --panel: #1b222d; --line: #2b3543;
+    --text: #e5eaf1; --muted: #8a97a8;
+    --accent: #52a7e2; --accent-soft: #1d3247;
+    --ok: #4cc284; --ok-soft: #17301f;
+    --warn: #d9a844; --warn-soft: #33290f;
+    --bad: #e5726f; --bad-soft: #3a1b1b;
+    --idle: #77839a; --idle-soft: #232a35;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161d; --panel: #1b222d; --line: #2b3543;
+  --text: #e5eaf1; --muted: #8a97a8;
+  --accent: #52a7e2; --accent-soft: #1d3247;
+  --ok: #4cc284; --ok-soft: #17301f;
+  --warn: #d9a844; --warn-soft: #33290f;
+  --bad: #e5726f; --bad-soft: #3a1b1b;
+  --idle: #77839a; --idle-soft: #232a35;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.55 system-ui, "Segoe UI", Roboto, sans-serif; }
+a { color: var(--accent); }
+
+#topbar {
+  display: flex; align-items: center; gap: 14px; padding: 10px 16px;
+  background: var(--panel); border-bottom: 1px solid var(--line);
+  position: sticky; top: 0; z-index: 10;
+}
+.brand { font-weight: 700; font-size: 15px; }
+.brand small { color: var(--muted); font-weight: 500; }
+#topbar .right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+#theme-toggle { background: none; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 8px; padding: 4px 10px; cursor: pointer; font-size: 14px; }
+
+#shell {
+  display: grid; grid-template-columns: 250px minmax(0,1fr) 330px;
+  gap: 14px; max-width: 1240px; margin: 0 auto; padding: 14px 16px 60px;
+}
+.card { background: var(--panel); border: 1px solid var(--line);
+  border-radius: 12px; padding: 13px 15px; }
+h4.ptitle {
+  margin: 0 0 8px; font-size: 11.5px; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--muted);
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+/* left rail */
+#majors { list-style: none; margin: 0; padding: 0; }
+#majors li {
+  padding: 9px 10px; border-radius: 9px; cursor: pointer;
+  border: 1px solid transparent; margin-bottom: 4px;
+}
+#majors li:hover { background: var(--accent-soft); }
+#majors li.sel { background: var(--accent-soft); border-color: var(--accent); }
+#majors .t { font-weight: 600; font-size: 13.5px; }
+#majors .sub { color: var(--muted); font-size: 11.5px; }
+#majors li.sel .t { color: var(--accent); }
+details.syssys { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 10px; }
+details.syssys summary { color: var(--muted); font-size: 12px; cursor: pointer; }
+details.syssys .ev { margin-top: 6px; }
+
+.pill {
+  display: inline-block; padding: 1px 9px; border-radius: 99px; font-size: 10.5px;
+  font-weight: 700; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+}
+.pill.ok, .pill.done { background: var(--ok-soft); color: var(--ok); }
+.pill.progress { background: var(--accent-soft); color: var(--accent); }
+.pill.review { background: var(--warn-soft); color: var(--warn); }
+.pill.rework { background: var(--warn-soft); color: var(--warn); }
+.pill.blocked { background: var(--bad-soft); color: var(--bad); }
+.pill.pending { background: var(--idle-soft); color: var(--idle); }
+
+/* middle: steps */
+#detail .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.step { border: 1px solid var(--line); border-radius: 11px; margin-bottom: 10px;
+  overflow: hidden; background: var(--panel); }
+.shead { display: flex; gap: 10px; padding: 10px 12px; cursor: pointer; align-items: flex-start; }
+.shead:hover { background: var(--accent-soft); }
+.snum {
+  flex: none; width: 26px; height: 26px; border-radius: 8px; background: var(--idle-soft);
+  color: var(--muted); font-weight: 700; display: flex; align-items: center;
+  justify-content: center; font-size: 13px;
+}
+.step.blocked .snum { background: var(--bad-soft); color: var(--bad); }
+.step.done .snum { background: var(--ok-soft); color: var(--ok); }
+.step.progress .snum { background: var(--accent-soft); color: var(--accent); }
+.shead .grow { flex: 1; min-width: 0; }
+.shead .t { font-weight: 600; }
+.shead .sub { color: var(--muted); font-size: 12px; margin-top: 1px; }
+.shead .right { text-align: right; flex: none; }
+.shead .arrow { color: var(--muted); transition: transform .15s; flex: none; margin-top: 4px; }
+.step.open .arrow { transform: rotate(90deg); }
+.sbody { display: none; border-top: 1px dashed var(--line); padding: 10px 12px 12px; }
+.step.open .sbody { display: block; }
+
+.wk { border: 1px solid var(--line); border-left: 3px solid var(--idle);
+  border-radius: 9px; padding: 9px 12px; margin: 7px 0; }
+.wk.progress { border-left-color: var(--accent); }
+.wk.done { border-left-color: var(--ok); }
+.wk.blocked { border-left-color: var(--bad); }
+.wk h5 { margin: 0 0 5px; font-size: 13px; display: flex; justify-content: space-between; gap: 8px; }
+.kv { font-size: 12.5px; margin: 2px 0; }
+.kv b { color: var(--muted); font-weight: 600; }
+.kv.mono, .mono { font-family: var(--mono); font-size: 12px; }
+.sub { color: var(--muted); font-size: 12px; }
+.ev .m { font-size: 12.5px; margin: 2px 0; }
+.evpills { margin-top: 5px; }
+.evpills .pill { margin: 1px 3px 1px 0; }
+
+button.act {
+  background: var(--panel); border: 1px solid var(--line); color: var(--text);
+  border-radius: 8px; padding: 5px 11px; cursor: pointer; font-size: 12.5px;
+  font-family: inherit;
+}
+button.act:hover { border-color: var(--accent); color: var(--accent); }
+button.act.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.act.primary:hover { opacity: .9; color: #fff; }
+button.act.ok { border-color: var(--ok); color: var(--ok); }
+button.act.bad { border-color: var(--bad); color: var(--bad); }
+
+/* right pane */
+.hrow { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0;
+  border-bottom: 1px dashed var(--line); font-size: 12.5px; align-items: center; }
+.hrow:last-child { border-bottom: none; }
+.hrow .sub { font-size: 11.5px; }
+.ev { border-left: 3px solid var(--accent); background: var(--bg);
+  border-radius: 0 8px 8px 0; padding: 7px 10px; margin: 7px 0; font-size: 12.5px; }
+.ev .s { font-weight: 600; font-size: 12.5px; }
+.ev.warn { border-left-color: var(--warn); }
+.ev.bad { border-left-color: var(--bad); }
+
+.demobar {
+  display: flex; gap: 10px; align-items: center; background: var(--warn-soft);
+  color: var(--warn); border: 1px solid var(--warn); border-radius: 10px;
+  padding: 8px 14px; margin-bottom: 14px; font-size: 12.5px;
+  grid-column: 1 / -1;
+}
+.demobar .dot { width: 8px; height: 8px; border-radius: 50%;
+  background: var(--warn); animation: pulse 1.6s infinite; flex: none; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+.legend { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px 14px;
+  color: var(--muted); font-size: 12px; align-items: center; }
+
+@media (max-width: 1000px) {
+  #shell { grid-template-columns: 1fr; }
+  #rail, #pane { max-width: 640px; }
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <span class="brand">🐠 workflow-fishbowl <small>· workbench (v0.2 vision)</small></span>
+  <span class="right">
+    <span class="pill progress">supervision mode</span>
+    <button id="theme-toggle" title="Toggle theme">◐</button>
+  </span>
+</div>
+
+<div id="shell">
+
+  <div class="demobar">
+    <span class="dot"></span>
+    <span><b>Static demo, synthetic data.</b> The three-level hierarchy (major task → step → work item),
+    evidence checks and the right-hand pane mirror the real supervision workbench design.
+    In production every status below is evaluated server-side from persisted ledgers — never hard-coded.</span>
+  </div>
+
+  <div class="legend">
+    <span>status priority:</span>
+    <span class="pill blocked">blocked</span>
+    <span class="pill rework">rework</span>
+    <span class="pill progress">in progress</span>
+    <span class="pill review">awaiting review</span>
+    <span class="pill done">done</span>
+    <span class="pill pending">not started</span>
+    <span style="margin-left:auto" class="mono">click a step to expand its work items</span>
+  </div>
+
+  <!-- ============ LEVEL 1: left rail, major tasks ============ -->
+  <div class="card" id="rail">
+    <h4 class="ptitle">Major tasks <span class="mono" id="tinfo"></span></h4>
+    <ul id="majors"></ul>
+    <details class="syssys">
+      <summary>System records (folded — internal sub-work, not peer tasks)</summary>
+      <div class="ev"><div class="s">Mail-link probe</div>
+        <div class="m sub">simulated delivery round-trip · 09-14 11:20 · ok</div></div>
+      <div class="ev"><div class="s">Router controlled restart</div>
+        <div class="m sub">drill closed loop · 09-14 09:05 · done</div></div>
+      <div class="ev"><div class="s">Ledger integrity check</div>
+        <div class="m sub">daily · next run in 4h · pending</div></div>
+    </details>
+  </div>
+
+  <!-- ============ LEVEL 2 + 3: steps and work items ============ -->
+  <div class="card" id="detail">
+    <div id="detail-inner"></div>
+  </div>
+
+  <!-- ============ right pane: task-level aggregation ============ -->
+  <div id="pane">
+    <div class="card" style="margin-bottom:14px">
+      <h4 class="ptitle">Health <button class="act" id="btn-refresh">refresh</button></h4>
+      <div id="health3"></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <h4 class="ptitle">Needs your decision</h4>
+      <div id="approvals"></div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <h4 class="ptitle">Anomalies</h4>
+      <div id="anomalies"></div>
+    </div>
+    <div class="card">
+      <h4 class="ptitle">Timeline</h4>
+      <div id="timeline"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---- theme ---- */
+var root = document.documentElement;
+var saved = null;
+try { saved = localStorage.getItem("fb-wb-theme"); } catch (e) {}
+if (saved) root.dataset.theme = saved;
+document.getElementById("theme-toggle").onclick = function () {
+  var cur = root.dataset.theme ||
+    (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  root.dataset.theme = cur === "dark" ? "light" : "dark";
+  try { localStorage.setItem("fb-wb-theme", root.dataset.theme); } catch (e) {}
+};
+
+/* ---------------------------------------------------------------------------
+   Mock hierarchy. In production this tree is persisted server-side and
+   every step status is *derived* live from evidence checks against real
+   ledgers (deliveries, receipts, logs). The frontend never decides status.
+--------------------------------------------------------------------------- */
+var TREE = {
+  major_tasks: [
+    {
+      major_id: "MAJOR-1", task_id: "TASK-SITE-001",
+      title: "Build & launch the public website",
+      subtitle: "Marketing site, docs and CI — everything user-facing",
+      task_status: "progress",
+      steps: [
+        {
+          step_id: "STEP-1", seq: 1, status: "done",
+          title: "Environment & tooling check",
+          progress: "Repo scaffold, CI matrix and deploy preview verified.",
+          evidence: [
+            { label: "CI green on 3 platforms", passed: true },
+            { label: "Preview deploy reachable", passed: true }
+          ],
+          works: [
+            { status: "done", title: "Scaffold + CI wiring",
+              done: "Template chosen, actions workflow committed, badges live.",
+              recent: "09-12 · milestone accepted (receipt on file)",
+              artifacts: ["ci/main.workflow", "site/scaffold.zip"] }
+          ]
+        },
+        {
+          step_id: "STEP-2", seq: 2, status: "progress",
+          title: "Content pipeline & docs",
+          progress: "Docs engine merged; 4 of 6 pages drafted.",
+          evidence: [
+            { label: "Docs build clean", passed: true },
+            { label: "All 6 pages drafted", passed: false }
+          ],
+          works: [
+            { status: "done", title: "Docs engine + search",
+              done: "Static search index, sub-second queries.",
+              recent: "09-13 · merged" },
+            { status: "progress", title: "Write remaining 2 pages",
+              doing: "Drafting the API reference page (page 5 of 6).",
+              next: "Submit draft for review tomorrow morning.",
+              recent: "09-14 10:40 · 60% written" }
+          ]
+        },
+        {
+          step_id: "STEP-3", seq: 3, status: "blocked",
+          title: "Domain & TLS provisioning",
+          progress: "Blocked on corporate DNS approval — escalated, waiting on the network team.",
+          evidence: [
+            { label: "DNS record created", passed: false },
+            { label: "TLS cert issued", passed: false }
+          ],
+          works: [
+            { status: "blocked", title: "DNS + certificate",
+              done: "Request filed with all required forms.",
+              blocked_on: "Network team ticket NET-2214 (SLA 3 business days, 2 remaining).",
+              next: "Ping ticket owner if no movement by Thursday.",
+              recent: "09-14 08:15 · escalated" }
+          ]
+        },
+        {
+          step_id: "STEP-4", seq: 4, status: "pending",
+          title: "Launch hardening & go-live",
+          progress: "Not started — depends on steps 2 and 3.",
+          evidence: [
+            { label: "Load test passed", passed: false },
+            { label: "Go-live checklist signed", passed: false }
+          ],
+          works: []
+        }
+      ]
+    },
+    {
+      major_id: "MAJOR-2", task_id: "TASK-DATA-002",
+      title: "Nightly data pipeline hardening",
+      subtitle: "Retries, alerting and the weekend-hang fix",
+      task_status: "review",
+      steps: [
+        {
+          step_id: "STEP-5", seq: 1, status: "review",
+          title: "Fix weekend import hang",
+          progress: "Timeout-reset patch delivered; awaiting supervisor acceptance.",
+          evidence: [
+            { label: "Patch delivered (E-receipt)", passed: true },
+            { label: "Acceptance received", passed: false }
+          ],
+          works: [
+            { status: "review", title: "Timeout reset between batches",
+              done: "Root cause found (timeout never reset), patched, dry-run clean.",
+              next: "Awaiting acceptance before closing.",
+              recent: "09-14 12:02 · delivered" }
+          ]
+        },
+        {
+          step_id: "STEP-6", seq: 2, status: "rework",
+          title: "Retry & alert policy",
+          progress: "First version rejected — supervisor wants exponential backoff.",
+          evidence: [
+            { label: "Backoff implemented", passed: false }
+          ],
+          works: [
+            { status: "rework", title: "Exponential backoff",
+              doing: "Reworking retry loop to backoff policy v2.",
+              blocked_on: null,
+              recent: "09-14 13:30 · rework started" }
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+/* statuses not shown as peer tasks (folded into system records) */
+var CUR = "TASK-SITE-001";
+var expanded = { "STEP-2": true, "STEP-3": true };  /* pre-expanded for the demo */
+
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+function pill(st) {
+  var map = { "done": "done", "progress": "progress", "review": "review",
+              "rework": "rework", "blocked": "blocked", "pending": "pending" };
+  return '<span class="pill ' + (map[st] || "pending") + '">' +
+         esc(String(st || "not started").replace("pending", "not started")) + "</span>";
+}
+
+/* ---- level 1 rail ---- */
+function renderRail() {
+  document.getElementById("majors").innerHTML = TREE.major_tasks.map(function (m) {
+    return '<li data-tid="' + esc(m.task_id) + '" class="' + (m.task_id === CUR ? "sel" : "") + '">' +
+      '<div class="t">' + esc(m.title) + "</div>" +
+      '<div class="sub mono">' + esc(m.task_id) + " · " + esc(m.task_status) + "</div></li>";
+  }).join("");
+  document.getElementById("tinfo").textContent = TREE.major_tasks.length + " tasks";
+  document.querySelectorAll("#majors li").forEach(function (li) {
+    li.onclick = function () { CUR = li.dataset.tid; renderAll(); };
+  });
+}
+
+/* ---- level 2 + 3 detail ---- */
+function workCard(w) {
+  return '<div class="wk ' + esc(w.status || "") + '">' +
+    "<h5><span>" + esc(w.title) + "</span>" + pill(w.status) + "</h5>" +
+    (w.doing ? '<div class="kv"><b>doing:</b> ' + esc(w.doing) + "</div>" : "") +
+    (w.done ? '<div class="kv"><b>done:</b> ' + esc(w.done) + "</div>" : "") +
+    (w.next ? '<div class="kv"><b>next action:</b> ' + esc(w.next) + "</div>" : "") +
+    (w.blocked_on ? '<div class="kv"><b>blocked on:</b> ' + esc(w.blocked_on) + "</div>" : "") +
+    (w.recent ? '<div class="kv"><b>last progress:</b> ' + esc(w.recent) + "</div>" : "") +
+    (w.artifacts ? '<div class="kv mono"><b>artifacts:</b> ' +
+        w.artifacts.map(esc).join(" · ") + "</div>" : "") +
+    "</div>";
+}
+function evidenceHtml(s) {
+  if (!(s.evidence || []).length) return "";
+  return '<div class="evpills sub">evidence (evaluated server-side from persisted ledgers): ' +
+    s.evidence.map(function (e) {
+      return '<span class="pill ' + (e.passed ? "ok" : "blocked") + '">' +
+        (e.passed ? "✓" : "✗") + " " + esc(e.label) + "</span>";
+    }).join("") + "</div>";
+}
+function renderDetail() {
+  var m = TREE.major_tasks.filter(function (x) { return x.task_id === CUR; })[0];
+  if (!m) return;
+  document.getElementById("detail-inner").innerHTML =
+    '<div class="row" style="justify-content:space-between">' +
+      "<h3 style='margin:0'>" + esc(m.title) + "</h3>" + pill(m.task_status) +
+    "</div>" +
+    '<div class="sub mono">' + esc(m.task_id) + " · updated 2026-09-14 13:44</div>" +
+    (m.subtitle ? '<div class="sub">' + esc(m.subtitle) + "</div>" : "") +
+    '<div class="row" style="margin:10px 0 4px">' +
+      '<button class="act primary">Supplement requirement…</button>' +
+      '<button class="act">Pause task</button>' +
+      '<button class="act bad">Cancel task</button>' +
+      '<button class="act" id="btn-refresh2">Refresh</button>' +
+    "</div>" +
+    '<p class="sub">Supplements default to the whole major task; scope must be named ' +
+    "explicitly to narrow to a step. Pause / cancel affect only this task — never the control plane.</p>" +
+    '<h4 style="margin:8px 0">Steps (' + m.steps.length + ")</h4>" +
+    m.steps.map(function (s) {
+      var isOpen = !!expanded[s.step_id];
+      return '<div class="step ' + esc(s.status) + (isOpen ? " open" : "") + '" data-sid="' + esc(s.step_id) + '">' +
+        '<div class="shead">' +
+          '<span class="snum">' + (s.seq || "·") + "</span>" +
+          '<span class="grow"><span class="t">' + esc(s.title) + "</span>" +
+            '<div class="sub">' + esc(s.progress || "") + "</div></span>" +
+          '<span class="right">' + pill(s.status) +
+            '<div class="sub">status derived from evidence</div></span>' +
+          '<span class="arrow">▶</span>' +
+        "</div>" +
+        '<div class="sbody">' +
+          '<div class="sub" style="margin-bottom:2px">work items (' + (s.works || []).length + "):</div>" +
+          ((s.works || []).length
+            ? (s.works || []).map(workCard).join("")
+            : '<p class="sub">No work items registered yet.</p>') +
+          evidenceHtml(s) +
+          '<div class="row" style="margin-top:8px">' +
+            '<button class="act">Supplement this step…</button></div>' +
+        "</div></div>";
+    }).join("");
+
+  document.querySelectorAll("#detail .shead").forEach(function (h) {
+    h.onclick = function () {
+      var sid = h.parentElement.dataset.sid;
+      expanded[sid] = !expanded[sid];
+      h.parentElement.classList.toggle("open", !!expanded[sid]);
+    };
+  });
+  document.getElementById("btn-refresh2").onclick = renderAll;
+}
+
+/* ---- right pane ---- */
+var HEALTH = [
+  { label: "Executor health", ok: true, detail: "heartbeat 4s ago" },
+  { label: "Mail-link health", ok: true, detail: "in/out receipts current" },
+  { label: "Auto-ping watchdog", ok: false, detail: "heartbeat 214s ago (threshold 180s)" },
+  { label: "Outbound unacknowledged", ok: false, detail: "1 delivery without receipt" }
+];
+var APPROVALS = [{
+  question: "Publish the staging site to production DNS early?",
+  sections: {
+    what: "Point the live domain at the current staging build ahead of schedule.",
+    why: "The launch date moved up a week; content is 4/6 pages done.",
+    impact: "Visitors may see two unfinished pages until Thursday.",
+    safety: "Rollback is a single DNS record flip; no data involved.",
+    if_not: "We keep the preview link private until all pages finish.",
+    advice: "Recommended: wait for the full content set (2 days)."
+  },
+  mail_sent: true, user_receipt: true, decision: null,
+  options: ["Approve", "Decline"]
+}];
+var ANOMALIES = [
+  { title: "Watchdog heartbeat stale", status: "open",
+    detail: "auto-ping lock older than threshold; recovery drill scheduled" },
+  { title: "One outbound delivery unacknowledged", status: "disclosed",
+    detail: "escalation rule fires after 24h of silence" }
+];
+var TIMELINE = [
+  { kind: "delivery", summary: "Step-2 patch delivered (E-receipt on file)", ts: "13:02" },
+  { kind: "receipt", summary: "Supervisor acknowledged delivery", ts: "13:05" },
+  { kind: "decision", summary: "Rework requested on retry policy v2", ts: "13:30" },
+  { kind: "event", summary: "Work item created: exponential backoff", ts: "13:31" },
+  { kind: "alert", summary: "Watchdog heartbeat crossed threshold", ts: "13:41" }
+];
+
+function renderPane() {
+  document.getElementById("health3").innerHTML = HEALTH.map(function (h) {
+    return '<div class="hrow"><span>' + esc(h.label) + "</span>" +
+      '<span><span class="pill ' + (h.ok ? "ok" : "bad") + '">' + (h.ok ? "healthy" : "alert") + "</span> " +
+      '<span class="sub">' + esc(h.detail) + "</span></span></div>";
+  }).join("");
+
+  document.getElementById("approvals").innerHTML = APPROVALS.map(function (a) {
+    var SECN = { what: "What", why: "Why", impact: "Impact",
+                 safety: "Safety", if_not: "If declined", advice: "Recommendation" };
+    var secs = Object.keys(a.sections || {}).map(function (k) {
+      return '<div class="m"><b>' + esc(SECN[k] || k) + ":</b> " + esc(a.sections[k]) + "</div>";
+    }).join("");
+    var st = '<span class="pill ' + (a.mail_sent ? "ok" : "pending") + '">mail ' + (a.mail_sent ? "sent" : "not sent") + "</span> " +
+      '<span class="pill ' + (a.user_receipt ? "ok" : "pending") + '">receipt ' + (a.user_receipt ? "confirmed" : "pending") + "</span> " +
+      '<span class="pill ' + (a.decision ? "ok" : "pending") + '">' + (a.decision ? "decided: " + esc(a.decision) : "awaiting decision") + "</span>";
+    var btns = a.decision ? "" : a.options.map(function (o) {
+      return '<button class="act ' + (o === "Approve" ? "ok" : "bad") +
+        '" data-dec="' + esc(o) + '">' + esc(o) + "</button> ";
+    }).join("");
+    return '<div class="ev warn"><div class="s">' + esc(a.question) + "</div>" +
+      secs + '<div class="m" style="margin-top:4px">' + st + "</div>" +
+      '<div class="row" style="margin-top:6px">' + btns + "</div></div>";
+  }).join("");
+  document.querySelectorAll("#approvals button[data-dec]").forEach(function (b) {
+    b.onclick = function () {
+      APPROVALS[0].decision = b.dataset.dec;
+      renderPane();
+    };
+  });
+
+  document.getElementById("anomalies").innerHTML = ANOMALIES.map(function (a) {
+    return '<div class="ev bad"><div class="s">' + esc(a.title) +
+      ' <span class="pill bad">' + esc(a.status) + "</span></div>" +
+      '<div class="m sub">' + esc(a.detail) + "</div></div>";
+  }).join("");
+
+  document.getElementById("timeline").innerHTML = TIMELINE.map(function (t) {
+    return '<div class="ev"><div class="s">' + esc(t.kind) + " · " + esc(t.summary) + "</div>" +
+      '<div class="m sub mono">' + esc(t.ts) + "</div></div>";
+  }).join("");
+}
+
+function renderAll() { renderRail(); renderDetail(); renderPane(); }
+document.getElementById("btn-refresh").onclick = renderAll;
+renderAll();
+</script>
+</body>
+</html>
