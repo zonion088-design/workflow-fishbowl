@@ -1,6 +1,6 @@
 # workflow-fishbowl 🐠
 
-**Watch your Codex and Claude Code workflows through the glass.**
+**A local AI agent observability dashboard for Codex and Claude Code.**
 
 [![workflow-fishbowl dashboard](docs/workflow-fishbowl-dashboard.png)](demo/workbench-demo.html)
 
@@ -14,6 +14,15 @@ away. If you have ever left a long agent task running in a terminal, come
 back 20 minutes later and wondered *"what is it actually doing?"*,
 workflow-fishbowl
 is for you.
+
+Use workflow-fishbowl as a **Codex monitor**, **Claude Code monitor**,
+**AI agent dashboard**, **local LLM observability tool**, or
+**long-running coding-task monitor**. It is designed for developers who want
+visibility into agent work without uploading transcripts to a third party.
+
+**中文简介：** workflow-fishbowl 是一个本地、只读的 Codex 与 Claude Code
+AI 编程任务监控面板，帮助你查看会话状态、工具调用、卡住的任务、Token
+用量和成本估算。
 
 - **Live session list** — every project you work on, grouped, with status
   (active / idle / stalled / archived), the current tool call, and how long
@@ -68,6 +77,21 @@ agent in real time:
 ```bash
 python -m fishbowl --demo
 ```
+
+## Common use cases
+
+- Monitor a long-running Codex or Claude Code task while it runs.
+- Detect a pending tool call that may be stalled.
+- Review prompts, reasoning summaries, tool calls, errors, and subagents.
+- Compare model token usage and estimated costs locally.
+- Inspect sessions without sending transcripts or telemetry to a service.
+
+More focused guides:
+
+- [Codex monitoring](docs/codex-monitoring.md)
+- [Claude Code monitoring](docs/claude-code-monitoring.md)
+- [AI agent observability](docs/ai-agent-observability.md)
+- [中文说明](docs/README.zh-CN.md)
 
 ## How it works
 

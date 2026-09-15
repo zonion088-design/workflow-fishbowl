@@ -10,7 +10,11 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "fishbowl contributors" }]
-keywords = ["codex", "claude-code", "observability", "monitoring", "dashboard", "agent"]
+keywords = [
+    "codex", "claude-code", "ai-agent", "agent-monitoring",
+    "ai-observability", "llm-observability", "local-dashboard",
+    "developer-tools", "workflow-monitoring",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Web Environment",
